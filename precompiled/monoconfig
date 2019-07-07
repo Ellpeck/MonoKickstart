@@ -18,8 +18,6 @@
 	<dllmap dll="db2cli" target="libdb2_36.dylib" os="osx"/>
 	<dllmap dll="MonoPosixHelper" target="libMonoPosixHelper.so" os="linux"/>
 	<dllmap dll="MonoPosixHelper" target="libMonoPosixHelper.dylib" os="osx"/>
-	<dllmap dll="gdiplus.dll" target="libgdiplus.so.0.0.0" os="linux"/>
-	<dllmap dll="gdiplus.dll" target="libgdiplus.dylib" os="osx"/>
 	<dllmap dll="i:msvcrt" target="libc.so.6" os="linux"/>
 	<dllmap dll="i:msvcrt" target="libc.dylib" os="osx"/>
 	<dllmap dll="i:msvcrt.dll" target="libc.so.6" os="linux"/>
