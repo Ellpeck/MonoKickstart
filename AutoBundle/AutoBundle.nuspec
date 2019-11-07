@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata>
+        <id>AutoBundle</id>
+        <version>2.0.1</version>
+        <authors>Ellpeck</authors>
+        <description>This is a fork of MonoKickstart. It contains an application that you can use to bundle a standalone Mono "kick" application to run C# programs on GNU/Linux and Mac OSX without depending on a system installation of Mono.</description>
+        <tags>monogame build tool mono kickstart auto bundle precompiled</tags>
+        <projectUrl>https://github.com/Ellpeck/MonoKickstartAutoBundle</projectUrl>
+        <licenseUrl>https://github.com/Ellpeck/MonoKickstartAutoBundle/blob/master/LICENSE</licenseUrl>
+        <repository type="git" url="https://github.com/Ellpeck/MonoKickstartAutoBundle"/>
+        <readme>README.md</readme>
+    </metadata>
+    <files>
+        <file src="../README.md" target="README.md"/>
+        <file src="_._" target="lib/net462/"/>
+        <file src="AutoBundle.targets" target="build/AutoBundle.targets"/>
+        <file src="bin\Debug\net462\**\*" target="tools/"/>
+        <file src="..\precompiled\**\*" target="tools/precompiled/"/>
+    </files>
+</package>
