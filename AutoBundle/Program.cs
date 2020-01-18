@@ -101,8 +101,8 @@ namespace AutoBundle {
                         continue;
 
                     var newDir = Path.Combine(lib.FullName, dir.Name);
-                    if (File.Exists(newDir)) 
-                        File.Delete(newDir);
+                    if (Directory.Exists(newDir))
+                        Directory.Delete(newDir, true);
                     dir.MoveTo(newDir);
                 }
             }
