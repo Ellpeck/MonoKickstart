@@ -1,15 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace AutoBundle {
     internal static class Program {
 
         public static void Main(string[] args) {
-            if (args.Length != 1) {
+            if (args.Length < 1) {
                 Console.Error.WriteLine("No argument found. The path of the folder that contains your .exe file (relative to where this application is being run from) needs to be supplied. Aborting");
                 return;
             }
+            var useLib = ParseArgument(args, "useLib").Contains("true");
+            var libExceptions = ParseArgument(args, "libExceptions");
 
             var currDir = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, args[0]));
             var exeDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -26,6 +31,9 @@ namespace AutoBundle {
 
             var exe = exeFiles[0];
             var exeName = Path.GetFileNameWithoutExtension(exe.Name);
+
+            if (useLib)
+                EditAppConfig(exe);
 
             Console.WriteLine("Found " + exe + ", copying /precompiled...");
             var precompiled = new DirectoryInfo(Path.Combine(exeDir.FullName, "precompiled"));
@@ -67,7 +75,85 @@ namespace AutoBundle {
                 }
             }
 
+            if (useLib) {
+                Console.WriteLine("Moving libraries to Lib folder...");
+                var lib = currDir.CreateSubdirectory("Lib");
+                foreach (var file in currDir.EnumerateFiles()) {
+                    if (file.Name.Contains(exeName))
+                        continue;
+                    // Skip files that mono needs in the main folder
+                    if (file.Name == "netstandard.dll" || file.Name == "mscorlib.dll" || Regex.IsMatch(file.Name, "mono.*config")) {
+                        Console.WriteLine($"Ignoring {file.Name} since mono needs it to start");
+                        continue;
+                    }
+                    if (libExceptions.Contains(file.Name)) {
+                        Console.WriteLine($"Ignoring {file.Name}");
+                        continue;
+                    }
+
+                    var newFile = Path.Combine(lib.FullName, file.Name);
+                    if (File.Exists(newFile))
+                        File.Delete(newFile);
+                    file.MoveTo(newFile);
+                }
+                foreach (var dir in currDir.EnumerateDirectories()) {
+                    if (dir.Name == "Lib" || dir.Name == "Content")
+                        continue;
+
+                    var newDir = Path.Combine(lib.FullName, dir.Name);
+                    if (File.Exists(newDir)) 
+                        File.Delete(newDir);
+                    dir.MoveTo(newDir);
+                }
+            }
+
             Console.WriteLine("Done");
+        }
+
+        private static void EditAppConfig(FileInfo exe) {
+            var configLocation = exe.FullName + ".config";
+            try {
+                var config = new XmlDocument();
+                config.Load(configLocation);
+
+                var runtime = config.SelectSingleNode("/configuration/runtime");
+                foreach (XmlNode binding in runtime.ChildNodes) {
+                    foreach (XmlNode child in binding.ChildNodes) {
+                        if (child.Name == "probing" && child.Attributes["privatePath"]?.Value == "Lib") {
+                            Console.WriteLine("Didn't modify exe config since it already contains Lib redirect");
+                            return;
+                        }
+                    }
+                }
+
+                var newChild = config.CreateElement("assemblyBinding", "urn:schemas-microsoft-com:asm.v1");
+                var probing = config.CreateElement("probing");
+                probing.SetAttribute("privatePath", "Lib");
+                newChild.AppendChild(probing);
+                runtime.PrependChild(newChild);
+
+                config.Save(configLocation);
+                Console.WriteLine("Modified exe config to add Lib redirect");
+            } catch (Exception e) {
+                Console.WriteLine($"Couldn't load exe config file, expected {configLocation}: {e}");
+            }
+        }
+
+        private static List<string> ParseArgument(string[] args, string name) {
+            var results = new List<string>();
+            var found = false;
+            foreach (var arg in args) {
+                if (found) {
+                    if (arg.StartsWith("--"))
+                        break;
+                    results.Add(arg);
+                } else {
+                    if (arg != $"--{name}")
+                        continue;
+                    found = true;
+                }
+            }
+            return results;
         }
 
     }
