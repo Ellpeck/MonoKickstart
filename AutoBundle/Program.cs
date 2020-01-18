@@ -127,7 +127,7 @@ namespace AutoBundle {
                 }
 
                 var newChild = config.CreateElement("assemblyBinding", "urn:schemas-microsoft-com:asm.v1");
-                var probing = config.CreateElement("probing");
+                var probing = config.CreateElement("probing", "urn:schemas-microsoft-com:asm.v1");
                 probing.SetAttribute("privatePath", "Lib");
                 newChild.AppendChild(probing);
                 runtime.PrependChild(newChild);
