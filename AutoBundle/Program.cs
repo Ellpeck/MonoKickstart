@@ -31,6 +31,7 @@ namespace AutoBundle {
 
             var exe = exeFiles[0];
             var exeName = Path.GetFileNameWithoutExtension(exe.Name);
+            var safeExeName = Regex.Escape(exeName);
 
             if (useLib)
                 EditAppConfig(exe);
@@ -51,7 +52,7 @@ namespace AutoBundle {
                         string line;
                         while ((line = reader.ReadLine()) != null) {
                             if (line.Contains("kick")) {
-                                var newLine = line.Replace("kick", exeName);
+                                var newLine = line.Replace("kick", safeExeName);
                                 Console.WriteLine("Changing " + line.Trim() + " to " + newLine.Trim());
                                 line = newLine;
                             }
