@@ -27,9 +27,5 @@ if [ "$UNAME" == "Darwin" ]; then
 
 	./kick.bin.osx $@
 else
-	if [ "$ARCH" == "x86_64" ]; then
-		./kick.bin.x86_64 $@
-	else
-		./kick.bin.x86 $@
-	fi
+	./kick.bin.x86_64 $@
 fi
