@@ -10,9 +10,6 @@ UNAME=`uname`
 
 # MonoKickstart picks the right libfolder, so just execute the right binary.
 if [ "$UNAME" == "Darwin" ]; then
-	# ... Except on OSX.
-	export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:./osx/
-
 	# El Capitan is a total idiot and wipes this variable out, making the
 	# Steam overlay disappear. This sidesteps "System Integrity Protection"
 	# and resets the variable with Valve's own variable (they provided this
