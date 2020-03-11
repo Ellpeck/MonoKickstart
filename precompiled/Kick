@@ -7,7 +7,6 @@ cd "`dirname "$0"`"
 
 # Get the system architecture
 UNAME=`uname`
-ARCH=`uname -m`
 
 # MonoKickstart picks the right libfolder, so just execute the right binary.
 if [ "$UNAME" == "Darwin" ]; then
