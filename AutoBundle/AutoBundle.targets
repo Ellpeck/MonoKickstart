@@ -1,5 +1,5 @@
 <Project>
-    <Target Name="AutoBundle" AfterTargets="AfterBuild" Condition="'$(Configuration)' == 'Release'">
+    <Target Name="AutoBundle" AfterTargets="AfterBuild">
         <Exec Command="$(MSBuildThisFileDirectory)/../tools/AutoBundle.exe $(OutDir) --useLib $(AutoBundleUseLib) --libExceptions $(AutoBundleLibExceptions)"/>
     </Target>
 </Project>
