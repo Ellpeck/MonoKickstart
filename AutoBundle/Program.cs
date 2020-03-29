@@ -15,6 +15,7 @@ namespace AutoBundle {
             }
             var useLib = ParseArgument(args, "useLib").Contains("true");
             var libExceptions = ParseArgument(args, "libExceptions");
+            var skipPrecompiled = ParseArgument(args, "skipPrecompiled").Contains("true");
 
             var currDir = new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, args[0]));
             var exeDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -32,47 +33,50 @@ namespace AutoBundle {
             var exe = exeFiles[0];
             var exeName = Path.GetFileNameWithoutExtension(exe.Name);
             var safeExeName = Regex.Escape(exeName);
+            Console.WriteLine("Found " + exe);
 
             if (useLib)
                 EditAppConfig(exe);
 
-            Console.WriteLine("Found " + exe + ", copying /precompiled...");
-            var precompiled = new DirectoryInfo(Path.Combine(exeDir.FullName, "precompiled"));
-            if (!precompiled.Exists) {
-                Console.Error.WriteLine("/precompiled folder seems to have been moved, aborting");
-                return;
-            }
+            if (!skipPrecompiled) {
+                Console.WriteLine("Copying /precompiled...");
+                var precompiled = new DirectoryInfo(Path.Combine(exeDir.FullName, "precompiled"));
+                if (!precompiled.Exists) {
+                    Console.Error.WriteLine("/precompiled folder seems to have been moved, aborting");
+                    return;
+                }
 
-            foreach (var file in precompiled.EnumerateFiles()) {
-                if (file.Name == "Kick") {
-                    Console.WriteLine("Modifying Kick script...");
+                foreach (var file in precompiled.EnumerateFiles()) {
+                    if (file.Name == "Kick") {
+                        Console.WriteLine("Modifying Kick script...");
 
-                    var newScript = new StringBuilder();
-                    using (var reader = new StreamReader(file.OpenRead())) {
-                        string line;
-                        while ((line = reader.ReadLine()) != null) {
-                            if (line.Contains("kick")) {
-                                var newLine = line.Replace("kick", safeExeName);
-                                Console.WriteLine("Changing " + line.Trim() + " to " + newLine.Trim());
-                                line = newLine;
+                        var newScript = new StringBuilder();
+                        using (var reader = new StreamReader(file.OpenRead())) {
+                            string line;
+                            while ((line = reader.ReadLine()) != null) {
+                                if (line.Contains("kick")) {
+                                    var newLine = line.Replace("kick", safeExeName);
+                                    Console.WriteLine("Changing " + line.Trim() + " to " + newLine.Trim());
+                                    line = newLine;
+                                }
+                                newScript.Append(line).Append("\n");
                             }
-                            newScript.Append(line).Append("\n");
                         }
-                    }
 
-                    Console.WriteLine("Done modifying Kick script, saving as " + exeName);
-                    var newKick = new FileInfo(Path.Combine(currDir.FullName, exeName));
-                    if (newKick.Exists)
-                        newKick.Delete();
-                    using (var stream = newKick.CreateText()) {
-                        stream.Write(newScript);
+                        Console.WriteLine("Done modifying Kick script, saving as " + exeName);
+                        var newKick = new FileInfo(Path.Combine(currDir.FullName, exeName));
+                        if (newKick.Exists)
+                            newKick.Delete();
+                        using (var stream = newKick.CreateText()) {
+                            stream.Write(newScript);
+                        }
+                    } else if (file.Name.Contains("kick")) {
+                        var newName = file.Name.Replace("kick", exeName);
+                        Console.WriteLine("Changing file name " + file.Name + " to " + newName);
+                        file.CopyTo(Path.Combine(currDir.FullName, newName), true);
+                    } else {
+                        file.CopyTo(Path.Combine(currDir.FullName, file.Name), true);
                     }
-                } else if (file.Name.Contains("kick")) {
-                    var newName = file.Name.Replace("kick", exeName);
-                    Console.WriteLine("Changing file name " + file.Name + " to " + newName);
-                    file.CopyTo(Path.Combine(currDir.FullName, newName), true);
-                } else {
-                    file.CopyTo(Path.Combine(currDir.FullName, file.Name), true);
                 }
             }
 
@@ -84,7 +88,7 @@ namespace AutoBundle {
                         continue;
                     // Skip files that mono needs in the main folder
                     if (file.Name == "netstandard.dll" || file.Name == "mscorlib.dll" || Regex.IsMatch(file.Name, "mono.*config")) {
-                        Console.WriteLine($"Ignoring {file.Name} since mono needs it to start");
+                        Console.WriteLine($"Ignoring {file.Name} since it's required for startup");
                         continue;
                     }
                     if (libExceptions.Contains(file.Name)) {
@@ -100,6 +104,10 @@ namespace AutoBundle {
                 foreach (var dir in currDir.EnumerateDirectories()) {
                     if (dir.Name == "Lib" || dir.Name == "Content")
                         continue;
+                    if (libExceptions.Contains(dir.Name)) {
+                        Console.WriteLine($"Ignoring {dir.Name}");
+                        continue;
+                    }
 
                     var newDir = Path.Combine(lib.FullName, dir.Name);
                     if (Directory.Exists(newDir))

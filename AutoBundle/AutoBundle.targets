@@ -1,5 +1,5 @@
 <Project>
     <Target Name="AutoBundle" AfterTargets="AfterBuild">
-        <Exec Command="$(MSBuildThisFileDirectory)/../tools/AutoBundle.exe $(OutDir) --useLib $(AutoBundleUseLib) --libExceptions $(AutoBundleLibExceptions)"/>
+        <Exec Command="$(MSBuildThisFileDirectory)/../tools/AutoBundle.exe $(OutDir) --useLib $(AutoBundleUseLib) --libExceptions $(AutoBundleLibExceptions) --skipPrecompiled $(AutoBundleSkipPrecompiled)"/>
     </Target>
 </Project>
